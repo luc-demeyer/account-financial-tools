@@ -86,6 +86,8 @@ class account_invoice_line(orm.Model):
     _columns = {
         'asset_category_id': fields.many2one(
             'account.asset.category', 'Asset Category'),
+        'asset_id': fields.many2one(
+            'account.asset.asset', 'Asset'),
     }
 
     def onchange_account_id(self, cr, uid, ids, product_id,

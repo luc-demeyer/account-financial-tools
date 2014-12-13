@@ -16,5 +16,11 @@
             <field name="domain_force">['|',('company_id','=',False),('company_id','child_of',[user.company_id.id])]</field>
         </record>
 
+    <record id="account_asset_use_plusvalue" model="res.groups">
+        <field name="name">Asset Plus-Value</field>
+        <field name="category_id" ref="base.module_category_accounting_and_finance"/>
+        <field name="comment">The user will have access to plus-value account and will be able to link an invoice line to an asset</field>
+    </record>
+
     </data>
 </openerp>

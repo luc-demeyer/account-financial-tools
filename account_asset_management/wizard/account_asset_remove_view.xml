@@ -10,7 +10,7 @@
             <group colspan="4" col="2">
               <separator string="Specify the asset removal date" colspan="2"/>
               <field name="date_remove"/>
-              <field name="period_id"/>
+              <field name="period_id" invisible="context.get('early_removal', False)"/>
               <separator string="Notes" colspan="2"/>
               <field name="note" nolabel="1" colspan="2"/>
             </group>

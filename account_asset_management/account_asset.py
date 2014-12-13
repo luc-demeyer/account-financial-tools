@@ -75,6 +75,14 @@ class account_asset_category(orm.Model):
             'account.account', 'Depreciation Account', required=True),
         'account_expense_depreciation_id': fields.many2one(
             'account.account', 'Depr. Expense Account', required=True),
+        'account_residual_asset_value_id': fields.many2one(
+            'account.account', 'Residual Value Account', required=True,
+            help="This account is only used if you remove an asset before "
+                 "it is fully depreciated."),
+        'account_plus_value_asset_id': fields.many2one(
+            'account.account', 'Plus-Value Account',
+            help="This account is only used if you sell an asset "
+                 "before its removal"),
         'journal_id': fields.many2one(
             'account.journal', 'Journal', required=True),
         'company_id': fields.many2one(
@@ -839,6 +847,19 @@ class account_asset_asset(orm.Model):
             'nodestroy': True,
         }
 
+    def early_remove(self, cr, uid, ids, context=None):
+        return {
+            'name': _("Generate Asset Removal entries"),
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'account.asset.remove',
+            'target': 'new',
+            'type': 'ir.actions.act_window',
+            'context': dict(context, active_ids=ids, active_id=ids[0],
+                            early_removal=True),
+            'nodestroy': True,
+        }
+
     def set_to_draft(self, cr, uid, ids, context=None):
         return self.write(cr, uid, ids, {'state': 'draft'}, context=context)
 
@@ -1233,7 +1254,8 @@ class account_asset_asset(orm.Model):
         default.update({
             'depreciation_line_ids': [],
             'account_move_line_ids': [],
-            'state': 'draft'})
+            'state': 'draft',
+            'history_ids': []})
         return super(account_asset_asset, self).copy(
             cr, uid, id, default, context=context)
 
