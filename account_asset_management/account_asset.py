@@ -219,6 +219,7 @@ class account_asset_asset(orm.Model):
     _name = 'account.asset.asset'
     _description = 'Asset'
     _order = 'date_start desc, name'
+    _parent_store = True
 
     def unlink(self, cr, uid, ids, context=None):
         for asset in self.browse(cr, uid, ids, context=context):
@@ -868,39 +869,28 @@ class account_asset_asset(orm.Model):
                 res[asset.id] = _value_get(asset)
         return res
 
-    def _residual_compute(self, cr, uid, asset, context=None):
-        if asset.type == 'view':
-            return 0.0
-        cr.execute(
-            "SELECT COALESCE(SUM(amount),0.0) AS amount "
-            "FROM account_asset_depreciation_line "
-            "WHERE asset_id = %s AND type='depreciate' "
-            "AND (init_entry=TRUE OR move_check=TRUE)",
-            (asset.id,))
-        amount = cr.fetchone()[0]
-        return asset.asset_value - amount
-
-    def _residual(self, cr, uid, ids, name, args, context=None):
+    def _compute_depreciation(self, cr, uid, ids, name, args, context=None):
         res = {}
-        for asset in self.browse(cr, uid, ids, context):
-            if asset.type == 'normal':
-                res[asset.id] = self._residual_compute(cr, uid, asset, context)
+        for asset in self.browse(cr, uid, ids, context=context):
+            res[asset.id] = {}
+            child_ids = self.search(cr, uid,
+                                    [('parent_id', 'child_of', [asset.id]),
+                                     ('type', '=', 'normal')],
+                                    context=context)
+            if child_ids:
+                cr.execute(
+                    "SELECT COALESCE(SUM(amount),0.0) AS amount "
+                    "FROM account_asset_depreciation_line "
+                    "WHERE asset_id in %s AND type='depreciate' "
+                    "AND (init_entry=TRUE OR move_check=TRUE)",
+                    (tuple(child_ids),))
+                value_depreciated = cr.fetchone()[0]
             else:
-                def _residual_get(record):
-                    residual = self._residual_compute(cr, uid, asset, context)
-                    for rec in record.child_ids:
-                        residual += \
-                            rec.type == 'normal' and \
-                            self._residual_compute(cr, uid, rec, context) or \
-                            _residual_get(rec)
-                    return residual
-                res[asset.id] = _residual_get(asset)
-        return res
-
-    def _depreciated(self, cr, uid, ids, name, args, context=None):
-        res = {}
-        for asset in self.browse(cr, uid, ids, context):
-            res[asset.id] = asset.asset_value - asset.value_residual
+                value_depreciated = 0.0
+            res[asset.id]['value_residual'] = \
+                asset.asset_value - value_depreciated
+            res[asset.id]['value_depreciated'] = \
+                value_depreciated
         return res
 
     def _move_line_check(self, cr, uid, ids, name, args, context=None):
@@ -1001,7 +991,7 @@ class account_asset_asset(orm.Model):
             },
             help="This amount represent the initial value of the asset."),
         'value_residual': fields.function(
-            _residual, method=True,
+            _compute_depreciation, method=True, multi="cd",
             digits_compute=dp.get_precision('Account'),
             string='Residual Value',
             store={
@@ -1015,7 +1005,7 @@ class account_asset_asset(orm.Model):
                     ['amount', 'init_entry', 'move_id'], 20),
             }),
         'value_depreciated': fields.function(
-            _depreciated, method=True,
+            _compute_depreciation, method=True, multi="cd",
             digits_compute=dp.get_precision('Account'),
             string='Depreciated Value',
             store={
@@ -1043,7 +1033,10 @@ class account_asset_asset(orm.Model):
         'parent_id': fields.many2one(
             'account.asset.asset', 'Parent Asset', readonly=True,
             states={'draft': [('readonly', False)]},
-            domain=[('type', '=', 'view')]),
+            domain=[('type', '=', 'view')],
+            ondelete='restrict'),
+        'parent_left': fields.integer('Parent Left', select=1),
+        'parent_right': fields.integer('Parent Right', select=1),
         'child_ids': fields.one2many(
             'account.asset.asset', 'parent_id', 'Child Assets'),
         'date_start': fields.date(
