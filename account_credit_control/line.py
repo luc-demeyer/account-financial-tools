@@ -137,6 +137,9 @@ class CreditControlLine(models.Model):
 
     manually_overridden = fields.Boolean(string='Manually overridden')
 
+    run_id = fields.Many2one(comodel_name='credit.control.run',
+                             string='Source')
+
     @api.model
     def _prepare_from_move_line(self, move_line, level, controlling_date,
                                 open_amount):
@@ -153,7 +156,6 @@ class CreditControlLine(models.Model):
                               move_line.credit)
         data['balance_due'] = open_amount
         data['policy_level_id'] = level.id
-        data['company_id'] = move_line.company_id.id
         data['move_line_id'] = move_line.id
         return data
 

@@ -24,7 +24,10 @@
 ##############################################################################
 
 from openerp.osv import orm
+from openerp import SUPERUSER_ID
 from openerp.tools.translate import _
+from openerp import api
+
 
 FY_SLOT = '%(fy)s'
 YEAR_SLOT = '%(year)s'
@@ -36,9 +39,8 @@ class Sequence(orm.Model):
     def _create_fy_sequence(self, cr, uid, seq, fiscalyear, context=None):
         """ Create a FY sequence by cloning a sequence
             which has %(fy)s in prefix or suffix """
-        fy_seq_id = self.create(cr, uid, {
+        fy_seq_id = self.create(cr, SUPERUSER_ID, {
             'name': seq.name + ' - ' + fiscalyear.code,
-            'code': seq.code,
             'implementation': seq.implementation,
             'prefix': (seq.prefix and
                        seq.prefix.replace(FY_SLOT, fiscalyear.code)),
@@ -48,15 +50,26 @@ class Sequence(orm.Model):
             'number_increment': seq.number_increment,
             'padding': seq.padding,
             'company_id': seq.company_id.id,
+            'code': False,
+            # the Sequence Type is set to False, because the
+            # the fiscal-year-specific sequence must not be catched
+            # by next_by_code(), see
+            # https://github.com/OCA/account-financial-tools/issues/115
         }, context=context)
         self.pool['account.sequence.fiscalyear']\
-            .create(cr, uid, {
+            .create(cr, SUPERUSER_ID, {
                 'sequence_id': fy_seq_id,
                 'sequence_main_id': seq.id,
                 'fiscalyear_id': fiscalyear.id,
             }, context=context)
         return fy_seq_id
 
+    # We NEED to have @api.cr_uid_ids_context even if this file still uses
+    # the old API, to avoid breaking the POS, see this bug:
+    # https://github.com/OCA/account-financial-tools/issues/119
+    # Don't ask me why it fixes the bug, I have no idea  -- Alexis de Lattre
+    # I "copied" this solution from odoo-80/addons/account/ir_sequence.py
+    @api.cr_uid_ids_context
     def _next(self, cr, uid, seq_ids, context=None):
         if context is None:
             context = {}
