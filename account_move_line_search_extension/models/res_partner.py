@@ -23,7 +23,7 @@
 from openerp import models
 
 
-class res_partner(models.Model):
+class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     def search(self, cr, uid, args,
@@ -36,6 +36,6 @@ class res_partner(models.Model):
                  '|',
                  ('active', '=', False),
                  ('active', '=', True)])
-        return super(res_partner, self).search(
+        return super(ResPartner, self).search(
             cr, uid, args, offset=offset, limit=limit, order=order,
             context=context, count=count)

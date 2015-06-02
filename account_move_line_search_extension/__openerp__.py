@@ -28,8 +28,7 @@
     'category': 'Accounting & Finance',
     'depends': ['account'],
     'data': [
-        'account_view.xml',
-        'views/account.xml',
+        'views/account_view.xml'
     ],
     'qweb': [
         'static/src/xml/account_move_line_search_extension.xml',

@@ -4,7 +4,7 @@
 Journal Items Search Extension
 ==============================
 
-This module adds the 'Journal Items Search All' menu entry.
+This module adds the 'Journal Items Search All' menu entry and adds the new balance field in 'Journal Items'.
 
 This menu entry adds a number of search fields on top of the List View rows.
 These fields can be used in combination with the Search window.
@@ -24,6 +24,12 @@ Author
 ------
 * Luc De Meyer, Noviat <info@noviat.com>
 
+Contributors:
+-------------
+
+* Luc De Meyer, Noviat <info@noviat.com>
+* Ainara Galdona (AvanzOSC) <ainara.galdona@avanzosc.es>
+
 Maintainer
 ----------
 .. image:: http://odoo-community.org/logo.png
@@ -37,3 +43,4 @@ mission is to support the collaborative development of Odoo features and
 promote its widespread use.
 
 To contribute to this module, please visit http://odoo-community.org.
+

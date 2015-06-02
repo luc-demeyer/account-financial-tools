@@ -20,16 +20,24 @@
 #
 ##############################################################################
 
-from openerp import models
+from openerp import models, fields, api
 from lxml import etree
 
 
-class account_move_line(models.Model):
+class AccountMoveLine(models.Model):
     _inherit = 'account.move.line'
+
+    @api.one
+    @api.depends('debit', 'credit')
+    def _get_move_line_balance(self):
+        self.balance = self.debit - self.credit
+
+    balance = fields.Float(string="Balance", compute="_get_move_line_balance",
+                           store=True)
 
     def fields_view_get(self, cr, uid, view_id=None, view_type='form',
                         context=None, toolbar=False, submenu=False):
-        res = super(account_move_line, self).fields_view_get(
+        res = super(AccountMoveLine, self).fields_view_get(
             cr, uid, view_id=view_id, view_type=view_type,
             context=context, toolbar=toolbar, submenu=False)
         if context and 'account_move_line_search_extension' in context \
@@ -57,6 +65,6 @@ class account_move_line(models.Model):
                         cr, uid, [('id', 'child_of', ana_ids)])
                     arg[2] = ana_ids
                     break
-        return super(account_move_line, self).search(
+        return super(AccountMoveLine, self).search(
             cr, uid, args, offset=offset, limit=limit, order=order,
             context=context, count=count)

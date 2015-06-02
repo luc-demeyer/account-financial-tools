@@ -23,7 +23,7 @@
 from openerp import models
 
 
-class ir_actions_act_window(models.Model):
+class IrActionsActWindow(models.Model):
     _inherit = 'ir.actions.act_window'
 
     def _get_amlse_act_id(self, cr):
@@ -39,7 +39,7 @@ class ir_actions_act_window(models.Model):
 
     def __init__(self, pool, cr):
         self._amlse_act_id = self._get_amlse_act_id(cr)
-        super(ir_actions_act_window, self).__init__(pool, cr)
+        super(IrActionsActWindow, self).__init__(pool, cr)
 
     def _amlse_add_groups(self, cr, uid, context):
         groups = {}
@@ -52,7 +52,7 @@ class ir_actions_act_window(models.Model):
              context=None, load='_classic_read'):
         if not context:
             context = {}
-        res = super(ir_actions_act_window, self).read(
+        res = super(IrActionsActWindow, self).read(
             cr, uid, ids, fields=fields, context=context, load=load)
         if not self._amlse_act_id:
             self._amlse_act_id = self._get_amlse_act_id(cr)
