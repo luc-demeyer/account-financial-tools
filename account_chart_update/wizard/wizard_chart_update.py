@@ -719,26 +719,29 @@ class WizardUpdateChartsAccounts(models.TransientModel):
                     expected = self.find_repartition_by_templates(
                         template[key], real[key], real, field.inverse_name
                     )
-            # Register detected differences
-            if expected is not None:
-                if expected != [] and (
-                    key
-                    in ["invoice_repartition_line_ids", "refund_repartition_line_ids"]
-                    or expected != real[key]
-                ):
-                    result[key] = expected
-            else:
-                template_value = template[key]
-                if template._name == "account.account.template" and key == "code":
-                    template_value = self.padded_code(template["code"])
-                if template_value != real[key]:
-                    result[key] = template_value
-            # Avoid to cache recordset references
-            if key in result:
-                if isinstance(real._fields[key], fields.Many2many):
-                    result[key] = [(6, 0, result[key].ids)]
-                elif isinstance(real._fields[key], fields.Many2one):
-                    result[key] = result[key].id
+            try:
+                # Register detected differences
+                if expected is not None:
+                    if expected != [] and (
+                        key
+                        in ["invoice_repartition_line_ids", "refund_repartition_line_ids"]
+                        or expected != real[key]
+                    ):
+                        result[key] = expected
+                else:
+                    template_value = template[key]
+                    if template._name == "account.account.template" and key == "code":
+                        template_value = self.padded_code(template["code"])
+                    if template_value != real[key]:
+                        result[key] = template_value
+                # Avoid to cache recordset references
+                if key in result:
+                    if isinstance(real._fields[key], fields.Many2many):
+                        result[key] = [(6, 0, result[key].ids)]
+                    elif isinstance(real._fields[key], fields.Many2one):
+                        result[key] = result[key].id
+            except KeyError:
+                pass
         return result
 
     @api.model
